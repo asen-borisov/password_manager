@@ -1,6 +1,7 @@
 from tkinter import *
 from tkinter import messagebox
 from random import *
+import json
 
 
 window = Tk()
@@ -32,14 +33,42 @@ def generate_password():
     password_entry.insert(0, password)
 
 
+#----Search-----
+
+
+def find():
+    website = website_entry.get()
+    try:
+        with open("data.json") as data_file:
+            data = json.load(data_file)
+
+    except FileNotFoundError:
+        messagebox.showinfo(title="Error" , message="No data file found")
+
+    else:
+        if website in data:
+             email = data[website]["email"]
+             password = data[website]["password"]
+             messagebox.showinfo(title=website, message=f"Email: {email} \nPassword: {password}")
+
+        else:
+            messagebox.showinfo(title="Error", message=f"No details for {website} exists")
+
 
 #----Save Pass----
+
 
 def save():
 
     website = website_entry.get()
     email = email_entry.get()
     password = password_entry.get()
+    new_data = {
+        website:{
+         "email": email,
+         "password": password,}
+
+    }
 
     if len(website) ==0 or len(password) ==0 or len(email) == 0:
         messagebox.showinfo(title="Warning!", message="You left some fields empty.")
@@ -48,8 +77,21 @@ def save():
         is_ok = messagebox.askokcancel(title="Confirmation", message=f"Details for password: \n\nWebsite: {website} \nEmail: {email}"
                                                                      f"\nPassword: {password}\n\nDo you want to save them?")
         if is_ok:
-            with open("data.txt", "a") as data:
-                data.write(f"{website} | {email} | {password}\n")
+            try:
+                with open("data.json", "r") as data_file:
+                    data = json.load(data_file)
+
+            except FileNotFoundError:
+                with open("data.json", "w") as data_file:
+                    json.dump(new_data, data_file, indent=4)
+
+            else:
+                data.update(new_data)
+
+                with open("data.json", "w") as data_file:
+                    json.dump(data, data_file, indent=4)
+
+            finally:
                 website_entry.delete(0, END)
                 password_entry.delete(0, END)
 
@@ -61,7 +103,7 @@ website = Label(text="Website: ")
 website.grid(column=0, row=1)
 
 website_entry = Entry(width=35)
-website_entry.grid(column=1, row=1 , columnspan=2)
+website_entry.grid(column=1, row=1 ,columnspan=2)
 website_entry.focus()
 
 
@@ -84,6 +126,11 @@ generate.grid(column=2 , row=3)
 
 add = Button(text="Add", width=7, command=save)
 add.grid(column=1, row=4, columnspan=2)
+
+search = Button(text="Search", width=15, command=find)
+search.grid(column=2, row=1)
+
+
 
 
 
